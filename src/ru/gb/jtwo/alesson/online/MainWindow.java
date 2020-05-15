@@ -2,6 +2,7 @@ package ru.gb.jtwo.alesson.online;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class MainWindow extends JFrame {
 
@@ -10,7 +11,7 @@ public class MainWindow extends JFrame {
     private static final int WINDOW_WIDTH = 800;
     private static final int WINDOW_HEIGHT = 600;
 
-    Sprite[] sprites = new Sprite[100];
+    Sprite[] sprites = new Sprite[10];
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -30,7 +31,9 @@ public class MainWindow extends JFrame {
         add(canvas);
         setTitle("Circles");
         setVisible(true);
+        Background col = new Background(canvas);
     }
+
 
     private void initApplication() {
         for (int i = 0; i < sprites.length; i++) {
@@ -52,6 +55,36 @@ public class MainWindow extends JFrame {
     private void render(MainCanvas canvas, Graphics g) {
         for (int i = 0; i < sprites.length; i++) {
             sprites[i].render(canvas, g);
+        }
+    }
+
+    private Sprite[] del(Sprite[] arr, int i) {
+        if (i >= 0 && i < arr.length) {
+            Sprite[] copy = new Sprite[arr.length - 1];
+            System.arraycopy(arr, 0, copy, 0, i);
+            System.arraycopy(arr, i, copy, i, arr.length - i - 1);
+            return copy;
+        } else return new Sprite[0];
+    }
+
+    private Sprite[] add(Sprite[] arr) {
+        Sprite[] newArr = Arrays.copyOf(arr, arr.length + 1);
+        newArr[newArr.length - 1]= new Ball();
+        return newArr;
+    }
+
+    void onActionHandler(String action) {
+        int helperVar = sprites.length;
+        Sprite[] helper = sprites;
+        switch (action) {
+            case "add":
+                sprites = add(helper);
+                break;
+            case "del":
+                sprites = del(helper, 1);
+                break;
+            default:
+                break;
         }
     }
 
