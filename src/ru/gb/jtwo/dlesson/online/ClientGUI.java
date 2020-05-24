@@ -1,9 +1,15 @@
 package ru.gb.jtwo.dlesson.online;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler {
 
@@ -48,6 +54,28 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         userList.setListData(users);
         scrollUser.setPreferredSize(new Dimension(100, 0));
         cbAlwaysOnTop.addActionListener(this);
+        btnSend.addActionListener(this);
+        tfMessage.addActionListener(this);
+        log.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                try {
+                    msgToLogFile("log.txt", e.getDocument().getText(e.getDocument().getLength() - e.getLength(), e.getLength()));
+                } catch (BadLocationException badLocationException) {
+                    badLocationException.printStackTrace();
+                }
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                System.out.println(e);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                System.out.println(e);
+            }
+        });
 
         panelTop.add(tfIPAddress);
         panelTop.add(tfPort);
@@ -74,7 +102,12 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         Object src = e.getSource();
         if (src == cbAlwaysOnTop) {
             setAlwaysOnTop(cbAlwaysOnTop.isSelected());
-        } else {
+        } else if (src == btnSend || src == tfMessage){
+            if (!tfMessage.getText().equals("")) {
+                log.append(tfLogin.getText() + ": " + tfMessage.getText() + "\n");
+                tfMessage.setText("");
+                }
+        }else {
             throw new RuntimeException("Unknown source: " + src);
         }
     }
@@ -88,5 +121,15 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 t.getName(), e.getClass().getCanonicalName(), e.getMessage(), ste[0]);
         JOptionPane.showMessageDialog(this, msg, "Exception", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
+    }
+
+    public static void msgToLogFile(String fileName, String str) {
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
+            out.write(str);
+            out.close();
+        }catch (IOException e) {
+            System.out.println("exception occoured" + e);
+        }
     }
 }
