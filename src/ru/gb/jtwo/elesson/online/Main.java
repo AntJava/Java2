@@ -1,5 +1,7 @@
 package ru.gb.jtwo.elesson.online;
 
+import ru.gb.jtwo.alesson.online.Cat;
+
 public class Main {
 
     private static class MyThread extends Thread {
@@ -23,10 +25,8 @@ public class Main {
     private static int b = 0;
     private static int c = 0;
 
-    private static Object monitor = new Object();
-
-    private static void increment() {
-        synchronized (monitor) {
+    private synchronized static void increment() {
+        synchronized (Main.class) {
             for (int i = 0; i < 1_000_000; i++) {
                 a = a + 1;
                 b = b + 1;
@@ -35,18 +35,20 @@ public class Main {
             System.out.printf("a=%d, b=%d, c=%d\n", a, b, c);
         }
     }
-
+    private static Cat cat;
     public static void main(String[] args) {
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                increment();
-            }
-        };
 
-        new Thread(r, "Thread#1").start();
-        new Thread(r, "Thread#2").start();
-        new Thread(r, "Thread#3").start();
+        cat.toString();
+//        Runnable r = new Runnable() {
+//            @Override
+//            public void run() {
+//                increment();
+//            }
+//        };
+//
+//        new Thread(r, "Thread#1").start();
+//        new Thread(r, "Thread#2").start();
+//        new Thread(r, "Thread#3").start();
     }
 
     private static void joinExample() {
