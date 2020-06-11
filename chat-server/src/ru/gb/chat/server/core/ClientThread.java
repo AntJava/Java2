@@ -3,7 +3,6 @@ package ru.gb.chat.server.core;
 import ru.gb.chat.library.Library;
 import ru.gb.jtwo.network.SocketThread;
 import ru.gb.jtwo.network.SocketThreadListener;
-
 import java.net.Socket;
 
 public class ClientThread extends SocketThread {
@@ -48,4 +47,28 @@ public class ClientThread extends SocketThread {
         sendMessage(Library.getMsgFormatError(msg));
         close();
     }
+
+    String authTimeout(){
+        Runnable task = () -> {
+            try {
+                currentThread().sleep(120000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
+
+        Thread thread = new Thread(task);
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if(isAuthorized != true) {
+            close();
+            return " is not authorized and dropped";
+        } else return " is authorized";
+    }
+
+
 }
