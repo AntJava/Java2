@@ -17,16 +17,16 @@ import java.util.Arrays;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
 
-    private static final int WIDTH = 600;
-    private static final int HEIGHT = 300;
+    private static final int WIDTH = 900;
+    private static final int HEIGHT = 400;
 
     private final JTextArea log = new JTextArea();
     private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
     private final JTextField tfIPAddress = new JTextField("127.0.0.1");
     private final JTextField tfPort = new JTextField("8189");
     private final JCheckBox cbAlwaysOnTop = new JCheckBox("Always on top");
-    private final JTextField tfLogin = new JTextField("ivan");
-    private final JPasswordField tfPassword = new JPasswordField("1234");
+    private final JTextField tfLogin = new JTextField("");
+    private final JPasswordField tfPassword = new JPasswordField("");
     private final JButton btnLogin = new JButton("Login");
 
     private final JPanel panelBottom = new JPanel(new BorderLayout());
@@ -84,6 +84,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         add(panelBottom, BorderLayout.SOUTH);
 
         setVisible(true);
+        putLog("Для создания нового пользователя подключитесь к серверу не вводя логин и пароль");
     }
 
 
@@ -117,7 +118,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         if ("".equals(msg)) return;
         tfMessage.setText(null);
         tfMessage.grabFocus();
-        socketThread.sendMessage(Library.getTypeBcastClient(msg));
+        if (msg.startsWith("/")) socketThread.sendMessage(msg.replace(":", Library.DELIMITER));
+        else socketThread.sendMessage(Library.getTypeBcastClient(msg));
     }
 
     private void wrtMsgToLogFile(String msg, String username) {
@@ -203,19 +205,30 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 break;
             case Library.AUTH_DENIED:
                 putLog("Wrong login/password");
+                socketThread.close();
                 break;
             case Library.MSG_FORMAT_ERROR:
                 putLog(msg);
-                socketThread.close();
+                //socketThread.close();
                 break;
             case Library.TYPE_BROADCAST:
-                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3] + "\n");
+                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3]);
                 break;
             case Library.USER_LIST:
                 String users = msg.substring(Library.USER_LIST.length() + Library.DELIMITER.length());
                 String[] usersArr = users.split(Library.DELIMITER);
                 Arrays.sort(usersArr);
                 userList.setListData(usersArr);
+                break;
+            case Library.NEW_CLIENT:
+                putLog(arr[1]);
+                break;
+            case Library.NEW_NICKNAME:
+                if(getTitle().equals(WINDOW_TITLE + ": " + arr[1])) setTitle(WINDOW_TITLE + ": " + arr[2]);
+                putLog(arr[1] + " сменил никнэйм на " + arr[2]);
+                break;
+            case Library.BAD_NICKNAME:
+                putLog(arr[1]);
                 break;
             default:
                 throw new RuntimeException("Unknown message type: " + msg);

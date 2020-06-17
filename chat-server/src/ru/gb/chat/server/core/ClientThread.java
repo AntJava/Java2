@@ -45,13 +45,24 @@ public class ClientThread extends SocketThread {
 
     void msgFormatError(String msg) {
         sendMessage(Library.getMsgFormatError(msg));
-        close();
+        //close();
     }
 
-    String authTimeout(){
+    void msgNewClient(String msg) {
+        sendMessage(Library.msgNewClient(msg));
+    }
+
+    void newNickname(String nickname) {
+        if (isAuthorized == true) this.nickname = nickname;
+    }
+
+    void authTimeout(){
         Runnable task = () -> {
             try {
                 currentThread().sleep(120000);
+                if(isAuthorized != true) {
+                    close();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -59,15 +70,6 @@ public class ClientThread extends SocketThread {
 
         Thread thread = new Thread(task);
         thread.start();
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        if(isAuthorized != true) {
-            close();
-            return " is not authorized and dropped";
-        } else return " is authorized";
     }
 
 

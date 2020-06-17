@@ -81,8 +81,8 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onSocketAccepted(ServerSocketThread thread, ServerSocket server, Socket socket) {
         putLog("Client connected");
         String name = "SocketThread " + socket.getInetAddress() + ":" + socket.getPort();
-        //ClientThread t = new ClientThread(name, this, socket);
-        putLog(name + new ClientThread(name, this, socket).authTimeout());
+        ClientThread t = new ClientThread(name, this, socket);
+        t.authTimeout();
     }
 
     @Override
@@ -128,31 +128,49 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     private void handleNonAuthMessage(ClientThread newClient, String msg) {
         String[] arr = msg.split(Library.DELIMITER);
+        String msgType = arr[0];
 
-        // [/auth_request, login, password]
-
-        if (arr.length != 3 || !arr[0].equals(Library.AUTH_REQUEST)) {
-            newClient.msgFormatError(msg);
-            return;
+        switch (msgType){
+            case Library.REG_CLIENT:
+                if (arr.length == 4) {
+                    String login = arr[1];
+                    String password = arr[2];
+                    String nickname = arr[3];
+                    String user = SqlClient.newUser(login, password, nickname);
+                    if (user.equals("1")) {
+                        newClient.msgNewClient("Вы успешно зарегистрировались, войдите под своим логином и паролем\nДля смены никнейма используйте " + Library.NEW_NICKNAME + ":[NEW NICKNAME]");
+                        newClient.close();
+                    }else newClient.msgNewClient(user);
+                }
+                else newClient.msgNewClient("Для создания нового пользователя введите " + Library.REG_CLIENT + ":login:password:nickname");
+                break;
+            case Library.AUTH_REQUEST:
+                if (arr.length != 3) {
+                    newClient.msgNewClient("Для создания нового пользователя введите " + Library.REG_CLIENT + ":login:password:nickname");
+                } else {
+                    String login = arr[1];
+                    String password = arr[2];
+                    String nickname = SqlClient.getNickname(login, password);
+                    if (nickname == null) {
+                        newClient.authFail();
+                        return;
+                    } else {
+                        ClientThread oldClient = findClientByNickname(nickname);
+                        newClient.authAccept(nickname);
+                        if (oldClient == null) {
+                            sendToAllAuthorizedClients(Library.getTypeBroadcast("Server", nickname + " connected"));
+                        } else {
+                            oldClient.reconnect();
+                            clients.remove(oldClient);
+                        }
+                    }
+                    sendToAllAuthorizedClients(Library.getUserList(getUsers()));
+                }
+                break;
+            default:
+                newClient.msgFormatError(msg);
         }
-        String login = arr[1];
-        String password = arr[2];
-        String nickname = SqlClient.getNickname(login, password);
-        if (nickname == null) {
-            newClient.authFail();
-            return;
-        } else {
-            ClientThread oldClient = findClientByNickname(nickname);
-            newClient.authAccept(nickname);
-            if (oldClient == null) {
-                sendToAllAuthorizedClients(Library.getTypeBroadcast("Server", nickname + " connected"));
-            } else {
-                oldClient.reconnect();
-                clients.remove(oldClient);
-            }
 
-        }
-        sendToAllAuthorizedClients(Library.getUserList(getUsers()));
     }
 
     private void handleAuthMessage(ClientThread client, String msg) {
@@ -162,6 +180,17 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             case Library.CLIENT_MSG_BROADCAST:
                 sendToAllAuthorizedClients(Library.getTypeBroadcast(
                         client.getNickname(), arr[1]));
+                break;
+            case Library.NEW_NICKNAME:
+                String oldNickname = client.getNickname();
+                if (!oldNickname.equals(arr[1])) {
+                    String nick = SqlClient.newNickname(oldNickname, arr[1]);
+                    if (nick.equals("1")) {
+                        sendToAllAuthorizedClients(Library.msgNewNickname(oldNickname, arr[1]));
+                        client.newNickname(arr[1]);
+                        sendToAllAuthorizedClients(Library.getUserList(getUsers()));
+                    }else client.sendMessage(Library.msgBadNickname(arr[1] + " уже занят."));
+                }
                 break;
             default:
                 client.sendMessage(Library.getMsgFormatError(msg));

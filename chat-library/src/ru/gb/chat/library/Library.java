@@ -8,6 +8,7 @@ public class Library {
     * /broadcast±msg
     * /msg_format_error
     * /user_list±user1±user2±user3
+    * /new_client
     * */
 
     public static final String DELIMITER = "±";
@@ -17,7 +18,19 @@ public class Library {
     public static final String MSG_FORMAT_ERROR = "/msg_format_error"; // если мы вдруг не поняли, что за сообщение и не смогли разобрать
     public static final String TYPE_BROADCAST = "/bcast"; // то есть сообщение, которое будет посылаться всем
     public static final String USER_LIST = "/user_list";
-    public static final String CLIENT_MSG_BROADCAST = "/clinet_bcast";
+    public static final String CLIENT_MSG_BROADCAST = "/client_bcast";
+    public static final String NEW_CLIENT = "/new_client";
+    public static final String REG_CLIENT = "/new_user";
+    public static final String NEW_NICKNAME = "/nickname";
+    public static final String BAD_NICKNAME = "/bad_nickname";
+
+    public static String msgBadNickname(String msg) { return BAD_NICKNAME + DELIMITER + msg; }
+
+    public static String msgNewNickname(String oldNick, String newNick) {
+        return NEW_NICKNAME + DELIMITER + oldNick + DELIMITER + newNick;
+    }
+
+    public static String msgNewClient(String msg) { return NEW_CLIENT + DELIMITER + msg; }
 
     public static String getTypeBcastClient(String msg) {
         return CLIENT_MSG_BROADCAST + DELIMITER + msg;
