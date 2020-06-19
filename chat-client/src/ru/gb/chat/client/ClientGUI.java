@@ -8,11 +8,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
@@ -99,6 +102,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             connect();
         } else if (src == btnDisconnect) {
             socketThread.close();
+            log.setText("");
         } else {
             throw new RuntimeException("Unknown source: " + src);
         }
@@ -123,8 +127,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     }
 
     private void wrtMsgToLogFile(String msg, String username) {
-        try (FileWriter out = new FileWriter("log.txt", true)) {
-            out.write(username + ": " + msg + "\n");
+        try (FileWriter out = new FileWriter(username + "_log.txt", true)) {
+            out.write(msg);
             out.flush();
         } catch (IOException e) {
             if (!shownIoErrors) {
@@ -134,12 +138,30 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         }
     }
 
+    private void readFromLogFile(String username) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(username + "_log.txt"))) {
+            ArrayList<String> tempLog = new ArrayList<>();
+            String str;
+            int size;
+            while ((str = reader.readLine()) != null) {
+                log.append(str + "\n");
+            }
+            if (tempLog.size() > 100) size = tempLog.size() - 100;
+            else size = 0;
+            for (int i = size; i < tempLog.size(); i++) {
+                putLog(tempLog.get(i));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void putLog(String msg) {
         if ("".equals(msg)) return;
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                log.append(msg + "\n");
+                log.append(msg);
                 log.setCaretPosition(log.getDocument().getLength());
             }
         });
@@ -170,7 +192,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     @Override
     public void onSocketStart(SocketThread thread, Socket socket) {
-        putLog("Start");
+        putLog("Start" + "\n");
     }
 
     @Override
@@ -183,7 +205,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
-        putLog("Ready");
+        putLog("Ready" + "\n");
         panelBottom.setVisible(true);
         panelTop.setVisible(false);
         String login = tfLogin.getText();
@@ -202,17 +224,21 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         switch (msgType) {
             case Library.AUTH_ACCEPT:
                 setTitle(WINDOW_TITLE + ": " + arr[1]);
+                log.setText("");
+                readFromLogFile(tfLogin.getText());
                 break;
             case Library.AUTH_DENIED:
-                putLog("Wrong login/password");
+                log.setText("");
+                putLog("Wrong login/password" + "\n");
                 socketThread.close();
                 break;
             case Library.MSG_FORMAT_ERROR:
-                putLog(msg);
-                //socketThread.close();
+                putLog(msg + "\n");
                 break;
             case Library.TYPE_BROADCAST:
-                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3]);
+                String bMsg = DATE_FORMAT.format(Long.parseLong(arr[1])) + ": " + arr[2] + ": " + arr[3] + "\n";
+                putLog(bMsg);
+                wrtMsgToLogFile(bMsg, tfLogin.getText());
                 break;
             case Library.USER_LIST:
                 String users = msg.substring(Library.USER_LIST.length() + Library.DELIMITER.length());
@@ -221,14 +247,16 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 userList.setListData(usersArr);
                 break;
             case Library.NEW_CLIENT:
-                putLog(arr[1]);
+                putLog(arr[1] + "\n");
                 break;
             case Library.NEW_NICKNAME:
+                String nMsg = arr[1] + " сменил никнэйм на " + arr[2] + "\n";
                 if(getTitle().equals(WINDOW_TITLE + ": " + arr[1])) setTitle(WINDOW_TITLE + ": " + arr[2]);
-                putLog(arr[1] + " сменил никнэйм на " + arr[2]);
+                putLog(nMsg);
+                wrtMsgToLogFile(nMsg, tfLogin.getText());
                 break;
             case Library.BAD_NICKNAME:
-                putLog(arr[1]);
+                putLog(arr[1] + "\n");
                 break;
             default:
                 throw new RuntimeException("Unknown message type: " + msg);

@@ -1,0 +1,12 @@
+15:46:38:  Server: test1 connected
+15:46:48:  Server: test disconnected
+15:46:49:  Server: test connected
+15:46:51:  test1: тест лога
+15:46:57:  test: снова тест
+15:47:01:  Server: test disconnected
+15:47:03:  Server: test connected
+15:47:06:  Server: test1 connected
+16:44:41: : Server: test1 connected
+16:44:46: : Server: test connected
+16:46:43: : Server: test1 connected
+16:46:54: : Server: test1 connected

@@ -1,0 +1,20 @@
+15:46:30:  Server: test connected
+15:46:38:  Server: test1 connected
+15:46:49:  Server: test connected
+15:46:51:  test1: тест лога
+15:46:57:  test: снова тест
+15:47:03:  Server: test connected
+15:47:05:  Server: test1 disconnected
+15:47:06:  Server: test1 connected
+15:47:33:  Server: test1 disconnected
+16:39:06: : Server: test connected
+16:41:19: : Server: test connected
+16:41:25: : test: dfgdgf
+16:41:26: : test: dfgdg
+16:42:04: : Server: test connected
+16:42:10: : Server: test connected
+test сменил никнэйм на mavic
+mavic сменил никнэйм на test
+16:42:56: : Server: test connected
+16:44:46: : Server: test connected
+16:44:51: : Server: test1 disconnected

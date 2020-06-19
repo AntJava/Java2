@@ -34,6 +34,7 @@ public class SocketThread extends Thread {
             listener.onSocketException(this, exception);
         } finally {
             close();
+            listener.onSocketStop(this);
         }
     }
 
@@ -61,7 +62,6 @@ public class SocketThread extends Thread {
         } catch (IOException exception) {
             listener.onSocketException(this, exception);
         }
-        listener.onSocketStop(this);
     }
 
 }

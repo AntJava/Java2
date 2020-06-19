@@ -54,7 +54,6 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onServerStart(ServerSocketThread thread) {
         putLog("Server started");
         SqlClient.connect();
-        putLog(SqlClient.getNickname("ivan", "1234"));
 
     }
 
@@ -109,6 +108,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                     client.getNickname() + " disconnected"));
         }
         sendToAllAuthorizedClients(Library.getUserList(getUsers()));
+        putLog(thread.getName() + " disconnected");
     }
 
     @Override
